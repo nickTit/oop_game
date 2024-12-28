@@ -1,5 +1,6 @@
 import keyboard
 import random
+import time
 
 arena = [
     ["|", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "|"],#-13
@@ -19,12 +20,14 @@ arena = [
 
 def print_arena():
     keys = [key for key in inventary]
-    
+    print(keys)
+
     counter = 0
+    print("Используйте предметы на соответствующие клавиши:\n(1)Меч(бейй)\n(2)Зелье здоровья восстанавливает),\n(3)Cтена: можно поставить в радиусе 1 клетки,\n(4)Ловушка: можно поставить в радиусе 1 клетки")
     for i in arena:
-        
         if counter != len(inventary):
-            print(f"{" ".join(i)} {counter}: {inventary[keys[counter]]}")
+            inv.update_inventory()
+            print(f"{" ".join(i)} {keys[counter]}: {inv.inventary[keys[counter]]}")
             counter+=1
         else:
             print(" ".join(i))
@@ -35,14 +38,16 @@ def print_arena():
 arena_unpacked = [j for i in arena for j in i]
 
 class hero():
-    def __init__(self,x=5,y=-1):
+    def __init__(self,x=5,y=-1,hp=0):
         self.__x = x
         self.__y = y
-    
+        self.__hp = 4
     @property
     def cords(self):
         return self.__x, self.__y
-    
+    @property
+    def health(self):
+        return self.__hp
     @cords.setter #проверить не сначала
     def cords(self,cords):
         self.__x,self.__y =cords
@@ -108,11 +113,33 @@ class hero():
     def move_hero(self):
         try:
             print_arena()
-            keyboard.add_hotkey("w", lambda: self.move_to("w"))
-            keyboard.add_hotkey("s", lambda: self.move_to("s"))
-            keyboard.add_hotkey("a", lambda:self.move_to("a"))
-            keyboard.add_hotkey("d", lambda:self.move_to("d"))
-            keyboard.wait()
+            while True:
+                if keyboard.is_pressed("w"):
+                    knight.move_to("w")
+                    time.sleep(0.3)  # Добавляем паузу, чтобы предотвратить слишком частые срабатывания
+                elif keyboard.is_pressed("s"):
+                    knight.move_to("s")
+                    time.sleep(0.3)
+                elif keyboard.is_pressed("a"):
+                    knight.move_to("a")
+                    time.sleep(0.3)
+                elif keyboard.is_pressed("d"):
+                    knight.move_to("d")
+                    time.sleep(0.3)
+                elif keyboard.is_pressed("1"):
+                    inv.use_item_2("м")
+                    time.sleep(0.3)
+                elif keyboard.is_pressed("2"):
+                    inv.use_item_2("з")
+                    time.sleep(0.3)
+                elif keyboard.is_pressed("3"):
+                    inv.use_item_2("с")
+                    time.sleep(0.3)
+                elif keyboard.is_pressed("4"):
+                    inv.use_item_2("л")
+                    time.sleep(0.3)
+
+            
         except IndexError:
             print("НЕВОЗМОЖНО ДВИГАТЬСЯ")#по сути не работает т.к. arena[y][x+1]== " " не даёт уйти за пределы 
 
@@ -143,9 +170,13 @@ class inventory(): #меч(1) зелье здоровья(3)(з) ловушка(
 
         self.inventary = {"Меч":f"{self.items["sword"]}", "Зелье здоровья": f"{self.items["essence"]}", "Стена": f"{self.items["wall"]}", "Ловушка": f"{self.items["catcher"]}"}
     
+    def update_inventory(self):
+        self.inventary = {"Меч":f"{self.items["sword"]}", "Зелье здоровья": f"{self.items["essence"]}", "Стена": f"{self.items["wall"]}", "Ловушка": f"{self.items["catcher"]}"}
+
+
     def set_item(self,item_name):
         self.items[item_name]+=1
-        self.inventary = {"Меч":f"{self.items["sword"]}", "Зелье здоровья": f"{self.items["essence"]}", "Стена": f"{self.items["wall"]}", "Ловушка": f"{self.items["catcher"]}"}
+        self.update_inventory()
 
         #каждый раз обновляется, чтобы был актуальный список
 
@@ -166,21 +197,73 @@ class inventory(): #меч(1) зелье здоровья(3)(з) ловушка(
         self.create_item("с", 5)
 
         
-    def use_item(self):
+    
+        
+    def use_item_2(self,item):
+        if item =="м":
+            self.sword_attack(knight.cords)
+        #для меча отдельно прописать атаку в 3 клетки вперед
         pass
+    def place_item(self,cords):#для стены  ловушек, ловушки можно подбирать
+        
+        pass
+    def sword_attack(self,cords):
+        x,y = cords
+        print("НАЖМИ НАПРАВЛЕНИЕ УЖЕ 3 НОЧИ W A S D")
+        while True:
+            if keyboard.is_pressed("d"):
+                cord = "d"
+                break
+            elif keyboard.is_pressed("a"):
+                cord = "a"
+                break
+            elif keyboard.is_pressed("s"):
+                cord = "s"
+                break
+            elif keyboard.is_pressed("w"):
+                cord = "w"
+                break
+        if cord == "d":
+            for i in range(-1,2):
+                arena[y+i][x+1]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
+            print_arena()
+            for i in range(-1,2):
+                arena[y+i][x+1]=arena[y+i][x+1][:-1]
+        elif cord == "s":
+            for i in range(-1,2):
+                arena[y+1][x+i]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
+            print_arena()
+            for i in range(-1,2):
+                arena[y+1][x+i]=arena[y+1][x+i][:-1]
+        elif cord == "w":
+            for i in range(-1,2):
+                arena[y-1][x-i]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага (сделать список позиций((1.1),(1.-1)))
+            print_arena()
+            for i in range(-1,2):
+                arena[y-1][x-i]=arena[y-1][x-i][:-1]    
+        elif cord == "a":
+            for i in range(-1,2):
+                arena[y-i][x-1]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
+            print_arena()
+            for i in range(-1,2):
+                arena[y-i][x-1]=arena[y-i][x-1][:-1]
 
-
+        
+        pass
+    def heal(self):
+        pass
 
 knight = hero()
 inv = inventory()
 
 #test
-inventary = inv.inventary
+inventary = inv.inventary#лень название думать, пусть будет через а
 knight.pick_up_item(1,2)
 #test
 
 inv.show_arena_items()
 knight.move_hero()
+
 
 print(knight.cords, "\n")
 
