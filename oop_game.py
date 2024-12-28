@@ -24,6 +24,7 @@ def print_arena():
 
     counter = 0
     print("Используйте предметы на соответствующие клавиши:\n(1)Меч(бейй)\n(2)Зелье здоровья восстанавливает),\n(3)Cтена: можно поставить в радиусе 1 клетки,\n(4)Ловушка: можно поставить в радиусе 1 клетки")
+    print(f"Здоровье равно {knight.health}")
     for i in arena:
         if counter != len(inventary):
             inv.update_inventory()
@@ -42,12 +43,19 @@ class hero():
         self.__x = x
         self.__y = y
         self.__hp = 4
+    
     @property
     def cords(self):
         return self.__x, self.__y
+    
     @property
     def health(self):
         return self.__hp
+    
+    @health.setter
+    def health(self,damage):
+        self.__hp+=damage
+
     @cords.setter #проверить не сначала
     def cords(self,cords):
         self.__x,self.__y =cords
@@ -130,13 +138,13 @@ class hero():
                     inv.use_item_2("м")
                     time.sleep(0.3)
                 elif keyboard.is_pressed("2"):
-                    inv.use_item_2("з")
+                    inv.use_item_2("essence")
                     time.sleep(0.3)
                 elif keyboard.is_pressed("3"):
-                    inv.use_item_2("с")
+                    inv.use_item_2("wall")
                     time.sleep(0.3)
                 elif keyboard.is_pressed("4"):
-                    inv.use_item_2("л")
+                    inv.use_item_2("catcher")
                     time.sleep(0.3)
 
             
@@ -196,19 +204,7 @@ class inventory(): #меч(1) зелье здоровья(3)(з) ловушка(
         self.create_item("з",3)
         self.create_item("с", 5)
 
-        
-    
-        
-    def use_item_2(self,item):
-        if item =="м":
-            self.sword_attack(knight.cords)
-        #для меча отдельно прописать атаку в 3 клетки вперед
-        pass
-    def place_item(self,cords):#для стены  ловушек, ловушки можно подбирать
-        
-        pass
-    def sword_attack(self,cords):
-        x,y = cords
+    def return_direction(self):
         print("НАЖМИ НАПРАВЛЕНИЕ УЖЕ 3 НОЧИ W A S D")
         while True:
             if keyboard.is_pressed("d"):
@@ -223,12 +219,58 @@ class inventory(): #меч(1) зелье здоровья(3)(з) ловушка(
             elif keyboard.is_pressed("w"):
                 cord = "w"
                 break
+        return cord
+        
+    
+        
+    def use_item_2(self,item):
+        if item =="м" and self.items["sword"]!=0:
+            self.sword_attack(knight.cords)
+        elif (item =="catcher" and self.items["catcher"]>0) or (item =="wall" and self.items["wall"]):
+            self.items[item]-=1
+            self.update_inventory()
+            self.place_item(knight.cords,item)
+        elif item == "essence" and self.items["essence"]>0:
+            self.items[item]-=1
+            self.update_inventory()
+            self.heal()
+        else:
+            print("Не хватает предмета")
+
+        #для меча отдельно прописать атаку в 3 клетки вперед
+        pass
+    def place_item(self,cords,item):#для стены  ловушек, ловушки можно подбирать
+        x,y = cords
+        cords_around = {"d":[y,x+1],"a":[y,x-1],"w":[y-1,x],"s":[y+1,x]}
+        if item == "wall":
+            item = "#"
+            direction = self.return_direction()#возвращает w a s d
+            arena[cords_around[direction][0]][cords_around[direction][1]]=item
+            print_arena()
+        elif item == "catcher":
+            item = "Л"
+            direction = self.return_direction()#возвращает w a s d
+            arena[cords_around[direction][0]][cords_around[direction][1]]=item
+            print_arena()
+            
+            
+    def sword_attack(self,cords):
+        x,y = cords
+        cord = self.return_direction() # 
+        #cords_around = {"d":[[y+i],[x+1]], "a":[[y-i],[x-1]], "s":[[y+1],[x+i]], "w":[[y-1],[x+i]]} не вышло
+
         if cord == "d":
             for i in range(-1,2):
                 arena[y+i][x+1]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
             print_arena()
             for i in range(-1,2):
                 arena[y+i][x+1]=arena[y+i][x+1][:-1]
+        elif cord == "a":
+            for i in range(-1,2):
+                arena[y-i][x-1]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
+            print_arena()
+            for i in range(-1,2):
+                arena[y-i][x-1]=arena[y-i][x-1][:-1]
         elif cord == "s":
             for i in range(-1,2):
                 arena[y+1][x+i]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
@@ -241,16 +283,13 @@ class inventory(): #меч(1) зелье здоровья(3)(з) ловушка(
             print_arena()
             for i in range(-1,2):
                 arena[y-1][x-i]=arena[y-1][x-i][:-1]    
-        elif cord == "a":
-            for i in range(-1,2):
-                arena[y-i][x-1]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
-            print_arena()
-            for i in range(-1,2):
-                arena[y-i][x-1]=arena[y-i][x-1][:-1]
 
         
         pass
+    
     def heal(self):
+        knight.health=1
+        print_arena()
         pass
 
 knight = hero()
