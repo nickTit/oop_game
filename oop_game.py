@@ -76,7 +76,7 @@ class hero():
             self.pick_up_item(y,x+1)
             self.__x+=1
         print(self.cords)
-        arena[y][x] = "z"
+        arena[y][x] = " "
         arena[self.__y][self.__x] = "H"
         print_arena()
         
@@ -123,18 +123,23 @@ class hero():
             print_arena()
             while True:
                 if keyboard.is_pressed("w"):
+                    ghost.monster_movement()
                     knight.move_to("w")
                     time.sleep(0.3)  # Добавляем паузу, чтобы предотвратить слишком частые срабатывания
                 elif keyboard.is_pressed("s"):
                     knight.move_to("s")
+                    ghost.monster_movement()
                     time.sleep(0.3)
                 elif keyboard.is_pressed("a"):
+                    ghost.monster_movement()
                     knight.move_to("a")
                     time.sleep(0.3)
                 elif keyboard.is_pressed("d"):
+                    ghost.monster_movement()
                     knight.move_to("d")
                     time.sleep(0.3)
                 elif keyboard.is_pressed("1"):
+                    ghost.monster_movement()
                     inv.use_item_2("м")
                     time.sleep(0.3)
                 elif keyboard.is_pressed("2"):
@@ -258,27 +263,57 @@ class inventory(): #меч(1) зелье здоровья(3)(з) ловушка(
         x,y = cords
         cord = self.return_direction() # 
         #cords_around = {"d":[[y+i],[x+1]], "a":[[y-i],[x-1]], "s":[[y+1],[x+i]], "w":[[y-1],[x+i]]} не вышло
-
+        
+        monsters_cords = [ghost.monsters_cords[key] for key in ghost.monsters_cords]
+        cords_to_rm = []
+        print("Монстры:", monsters_cords)
+        #monst_y,monst_x = monsters_cords
         if cord == "d":
             for i in range(-1,2):
+                if [abs(12+y+i)+1,x+1] in monsters_cords:
+                    print([abs(12+y+i)+1,x+1])
+                    cords_to_rm.append([abs(12+y+i)+1,x+1])
+                    ghost.delete_monster(cords_to_rm)
+                else:
+                    print(f"[{abs(12+y+i)+1}, {x+1}] не найден в monsters_cords")
                 arena[y+i][x+1]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
             print_arena()
+            
             for i in range(-1,2):
                 arena[y+i][x+1]=arena[y+i][x+1][:-1]
         elif cord == "a":
             for i in range(-1,2):
+                if [abs(12+y-i)+1,x-1] in monsters_cords:
+                    print([abs(12+y-i)+1,x-1])
+                    cords_to_rm.append([abs(12+y-i)+1,x-1])
+                    ghost.delete_monster(cords_to_rm)
+                else:
+                    print(f"[{abs(12+y-i)+1}, {x-1}] не найден в monsters_cords")
                 arena[y-i][x-1]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
             print_arena()
             for i in range(-1,2):
                 arena[y-i][x-1]=arena[y-i][x-1][:-1]
         elif cord == "s":
             for i in range(-1,2):
+                if [abs(12+y+1)+1,x+i] in monsters_cords:
+                    print([abs(12+y+1)+1,x+i])
+                    cords_to_rm.append([abs(12+y+1)+1,x+i])
+                    ghost.delete_monster(cords_to_rm)
+                else:
+                    print(f"[{abs(12+y+1)+1}, {x+i}] не найден в monsters_cords")
                 arena[y+1][x+i]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага
             print_arena()
             for i in range(-1,2):
                 arena[y+1][x+i]=arena[y+1][x+i][:-1]
         elif cord == "w":
             for i in range(-1,2):
+                if [abs(12+y-1)+1,x-i] in monsters_cords:
+                    print([abs(12+y-1)+1,x-i])
+                    cords_to_rm.append([abs(12+y-1)+1,x-i])
+                    ghost.delete_monster(cords_to_rm)
+                else:
+                    print(f"[{abs(12+y-1)+1}, {x-i}] не найден в monsters_cords")
+                
                 arena[y-1][x-i]+="$"#наверное это как-то потом оптимизирую, потому что щас 3 ночи ага (сделать список позиций((1.1),(1.-1)))
             print_arena()
             for i in range(-1,2):
@@ -292,14 +327,93 @@ class inventory(): #меч(1) зелье здоровья(3)(з) ловушка(
         print_arena()
         pass
 
+class Monster(hero):
+    def __init__(self,x=5,y=-5,hp=1):
+        super().__init__(x,y,hp)
+        self.monster_count=0
+
+    def create_monster(self, monster ,count):
+        for i in range(count):
+            while True:
+                obj_x = random.randint(1,len(arena[0])-2)#####################################################
+                obj_y = random.randint(1,len(arena)-2)
+                if arena[obj_y][obj_x] == " ": 
+                    arena[obj_y][obj_x] = f"{monster}"
+                    self.monsters[self.monster_count]=monster
+                    self.monsters_cords[self.monster_count]=[obj_y,obj_x]
+                    self.monster_count+=1
+                    break
+
+    def place_monster(self):
+        self.monsters = {}
+        self.monsters_cords={}
+        self.create_monster("G",4)#ghost
+        self.create_monster("O",5)#ork
+        print_arena()
+    
+    def monster_movement(self):#типо сделать список монстров и присвоить каждому свой номер потом проходиться по ним и передвигать каждого поочередно
+        cords_to_remove = []
+        for key in self.monsters:
+            monster = self.monsters[key]
+            y,x = self.monsters_cords[key]
+            """if "$" in arena[y][x]:
+                keys_to_remove.append(key)
+                print("МОНСТР УБИТ")
+                arena[y][x]=" "
+                
+                self.delete_monster(keys_to_remove)
+            """    
+                
+            new_y, new_x = y+random.choice([-1, 0, 1]), x+random.choice([-1, 0, 1])
+            if arena[new_y][new_x]== " ":
+                arena[new_y][new_x]= monster
+                self.monsters_cords[key] = [new_y,new_x]
+                arena[y][x]=" "
+            elif arena[new_y][new_x]=="Л":
+                cords_to_remove.append([y,x])
+                arena[new_y][new_x]= " "
+                arena[y][x]=" "
+        self.delete_monster(cords_to_remove)        
+        pass
+    def delete_monster(self,cords_to_rm):
+        for i in cords_to_rm:
+            for key,value in list(self.monsters_cords.items()):
+                print(f"Проверка координат: удаляемые {i}, текущие {value}")
+                if i == value:
+                    arena[i[0]][i[1]]=" "
+                    print(f"Удаление монстра: {key}, координаты: {i}")  # Debug
+                    del self.monsters_cords[key]
+                    del self.monsters[key]
+                    break        
+        
+        
+        """for key in cords_to_rm:#cords    [[1,3],[1,1]]         "1":[1,3]
+            for i in self.monsters_cords:
+                if key == self.monsters_cords[i]:
+                    del self.monsters[i]
+                    del self.monsters_cords[i]
+        """
+        pass
+            
+    def update_monster_cords():
+        pass
+    
+    def monster_attack(self):
+        pass
+
+#мб надо было сделать просто класс монстра и от него создавать по 3 чудика а не в классе создавать монстров
+
+
 knight = hero()
 inv = inventory()
+ghost = Monster()
 
 #test
+print(ghost.cords, "asdasdaasd")
 inventary = inv.inventary#лень название думать, пусть будет через а
-knight.pick_up_item(1,2)
 #test
 
+ghost.place_monster()
 inv.show_arena_items()
 knight.move_hero()
 
